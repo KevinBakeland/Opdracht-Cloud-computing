@@ -1,0 +1,27 @@
+# Docker & Systeem logs
+*.log
+logs.txt
+
+# Node-RED gevoelige data en modules
+nodered/node_modules/
+nodered/.config.json
+nodered/.config.runtime.json
+nodered/flows.json.backup
+
+# Database data
+influxdb/
+mosquitto/data/
+mosquitto/log/
+portainer/
+
+# OS specifieke bestanden
+.DS_Store
+Thumbs.db
+
+# Environment bestanden 
+.env
+*.env
+
+# Tijdelijke bestanden
+*.swp
+*.bak

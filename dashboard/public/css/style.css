@@ -1,0 +1,259 @@
+/* Google Fonts voor de echte trading look */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #0b0e11; /* Donkere Binance-stijl achtergrond */
+    color: #eaecef;
+    margin: 0;
+    padding: 20px 20px 80px 20px; /* Extra padding onderaan voor de nieuwsbalk */
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+h1 { 
+    text-align: center; 
+    text-transform: uppercase; 
+    letter-spacing: 4px; 
+    font-weight: 800; 
+    margin-bottom: 40px;
+    color: #ffffff;
+}
+
+/* --- TOTAAL RENDEMENT KAART --- */
+.total-card {
+    position: relative;
+    background: linear-gradient(145deg, #1e2329, #161a1e);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+    margin-bottom: 40px;
+    text-align: center;
+    transition: border-color 0.5s ease;
+}
+
+.total-card h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: #848e9c;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#total-pl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3.5rem;
+    margin: 15px 0;
+    text-shadow: 0 0 30px currentColor; /* De neon glow effect */
+}
+
+/* --- AANDELEN GRID & KAARTEN --- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: #1e2329;
+    border-radius: 16px;
+    border: 1px solid #2d333a;
+    transition: all 0.3s ease;
+}
+
+.stock-card {
+    padding: 24px;
+    cursor: pointer;
+}
+
+.stock-card:hover {
+    transform: translateY(-5px);
+    border-color: #474d57;
+    background: #2b3139;
+}
+
+.price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.stats {
+    font-size: 0.8rem;
+    color: #848e9c;
+    margin-bottom: 20px;
+}
+
+/* --- KNOPPEN & ACTIES --- */
+.action-group {
+    border-top: 1px solid #2d333a;
+    padding-top: 20px;
+}
+
+.holdings-display {
+    font-size: 0.85rem;
+    color: #848e9c;
+    margin-bottom: 15px;
+}
+
+.holdings-display b {
+    color: #f0b90b; /* Trading gold accent */
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+}
+
+.buy-btn, .sell-btn {
+    flex: 1;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.buy-btn {
+    background: linear-gradient(to bottom, #2ebd85, #1e8d63);
+    color: white;
+}
+
+.sell-btn {
+    background: linear-gradient(to bottom, #f6465d, #c32d41);
+    color: white;
+}
+
+.buy-btn:hover, .sell-btn:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+}
+
+.reset-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    color: #848e9c;
+    border: 1px solid #474d57;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    background: #f6465d;
+    color: white;
+}
+
+/* --- MODAL (GRAFIEK POPUP) --- */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background-color: #1e2329;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 900px;
+    border: 1px solid #474d57;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #2d333a;
+    padding-bottom: 15px;
+}
+
+.close-button {
+    position: absolute; right: 20px; top: 15px;
+    font-size: 30px; cursor: pointer; color: #848e9c;
+}
+
+.chart-container {
+    height: 450px;
+    width: 100%;
+}
+
+.filter-group button {
+    background: #2b3139;
+    color: #848e9c;
+    border: 1px solid #474d57;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.filter-group button.active {
+    background: #f0b90b;
+    color: black;
+}
+
+/* --- LIVE NIEUWS TICKER (Extra tussenruimte versie) --- */
+.news-ticker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #1e2329;
+    border-top: 2px solid #f0b90b;
+    padding: 12px 0;
+    z-index: 999;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ticker-wrap {
+    display: inline-block;
+    padding-left: 100%;
+    /* Zet de tijd op 120s of hoger voor een rustig verloop door de extra spaties */
+    animation: ticker 120s linear infinite; 
+}
+
+.ticker-item {
+    display: inline-block;
+    color: #f0b90b;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    /* Verwijder eventuele padding-right hier, de JS regelt nu de ruimte */
+    padding-right: 0; 
+}
+
+@keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* --- HULPCLASSES --- */
+.profit { color: #0ecb81 !important; }
+.loss { color: #f6465d !important; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0b0e11; }
+::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 10px; }
