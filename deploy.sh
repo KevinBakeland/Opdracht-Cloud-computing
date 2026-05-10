@@ -1,24 +1,22 @@
 #!/bin/bash
 
-# Kleuren voor de output 
-GREEN='\033[0;32m'
-NC='\033[0m'
+echo "🚀 Start CI/CD Deployment Proces..."
 
-echo -e "${GREEN}>>> CI/CD proces starten voor Smart Gateway...${NC}"
+# 1. Haal de nieuwste code op van GitHub
+echo "📥 Pulling latest changes from GitHub..."
+git pull origin main
 
-# 1. Oude containers stoppen en verwijderen [cite: 45]
-echo "Stopping old containers..."
+# 2. Stop de huidige stack
+echo "🛑 Stopping current stack..."
 docker compose down
 
-# 2. De nieuwste versies bouwen (indien nodig) [cite: 44]
-echo "Building/pulling latest images..."
-docker compose pull
-docker compose build
+# 3. Bouw en start opnieuw
+echo "🏗️ Building and starting new containers..."
+docker compose up --build -d
 
-# 3. De stack opnieuw opstarten [cite: 46]
-echo "Restarting stack in detached mode..."
-docker compose up -d
+# 4. Opruimen
+echo "🧹 Cleaning up old images..."
+docker image prune -f
 
-# 4. Status check [cite: 32]
-echo -e "${GREEN}>>> Systeem succesvol uitgerold! Status van de services:${NC}"
-docker compose ps
+echo "✅ Deployment succesvol afgerond!"
+docker ps

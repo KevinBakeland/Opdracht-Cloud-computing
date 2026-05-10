@@ -130,5 +130,43 @@ chmod +x /root/smart-gateway/check_status.sh
 - De frontend haalt live data uit InfluxDB en gebruikt Chart.js voor grafieken.
 - Node-RED gebruikt de dependencies `node-red-contrib-influxdb` .
 
----
+## 🎁 Bonus: Backup & Disaster Recovery
+[cite_start]Om de integriteit van de verzamelde marktdata te garanderen en te voldoen aan industriële standaarden, is een geautomatiseerd backup-systeem geïmplementeerd.
 
+### 🛠️ Werking van het Backup-script (`backup.sh`)
+Het script zorgt voor een veilige en gecomprimeerde opslag van de InfluxDB-tijdreeksdata:
+* **Compressie**: Maakt gebruik van `tar -czf` om het data-volume efficiënt te verpakken.
+* **Versiebeheer**: Elk bestand krijgt een unieke tijdstempel (`YYYYMMDD_HHMMSS`) in de naam.
+* **Opslag**: Backups worden lokaal bewaard in de map `./backups`.
+* **Retentiebeleid**: Om schijfruimte op de gateway te besparen, worden backups ouder dan 7 dagen automatisch verwijderd via een `find` routine wanneer je een backup maakt.
+
+### 🚀 Gebruik
+Zorg eerst dat het script de juiste rechten heeft en voer het daarna uit:
+```bash
+chmod +x backup.sh
+./backup.sh
+```
+
+## Vervang de corrupte data door de backup
+- Stop de actieve stack:
+
+```Bash
+docker compose down
+```
+- Verwijder de corrupte data:
+
+```Bash
+sudo rm -rf ./influxdb
+```
+- Pak de gewenste backup uit:
+
+```Bash
+# Vervang 'DATUM' door de tijdstempel van de gewenste backup
+sudo tar -xzf ./backups/influxdb_backup_DATUM.tar.gz -C ./
+```
+
+- Herstart de services:
+
+```Bash
+docker compose up -d
+```
