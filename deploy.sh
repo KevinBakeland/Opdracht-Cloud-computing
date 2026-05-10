@@ -14,9 +14,10 @@ docker compose down
 echo "🏗️ Building and starting new containers..."
 docker compose up --build -d
 
-# 4. Opruimen
-echo "🧹 Cleaning up old images..."
-docker image prune -f
+# 3. De stack opnieuw opstarten [cite: 46]
+echo "Restarting stack in detached mode..."
+docker compose up -d
 
-echo "✅ Deployment succesvol afgerond!"
-docker ps
+# 4. Status check [cite: 32]
+echo -e "${GREEN}>>> Systeem succesvol uitgerold! Status van de services:${NC}"
+docker compose ps
