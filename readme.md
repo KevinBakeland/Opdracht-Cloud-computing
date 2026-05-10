@@ -131,7 +131,7 @@ chmod +x /root/smart-gateway/check_status.sh
 - Node-RED gebruikt de dependencies `node-red-contrib-influxdb` .
 
 ## 🎁 Bonus: Backup & Disaster Recovery
-[cite_start]Om de integriteit van de verzamelde marktdata te garanderen en te voldoen aan industriële standaarden, is een geautomatiseerd backup-systeem geïmplementeerd.
+Om de integriteit van de verzamelde marktdata te garanderen en te voldoen aan industriële standaarden, is een geautomatiseerd backup-systeem geïmplementeerd.
 
 ### 🛠️ Werking van het Backup-script (`backup.sh`)
 Het script zorgt voor een veilige en gecomprimeerde opslag van de InfluxDB-tijdreeksdata:
