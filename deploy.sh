@@ -2,7 +2,7 @@
 
 echo "🚀 Start CI/CD Deployment Proces..."
 
-# 1. Haal de nieuwste code op van GitHub
+# 1. Pull de laatste wijzigingen
 echo "📥 Pulling latest changes from GitHub..."
 git pull origin main
 
@@ -10,14 +10,24 @@ git pull origin main
 echo "🛑 Stopping current stack..."
 docker compose down
 
-# 3. Bouw en start opnieuw
+# 3. Start de stack opnieuw op
 echo "🏗️ Building and starting new containers..."
-docker compose up --build -d
+docker compose up -d --build
 
-# 3. De stack opnieuw opstarten [cite: 46]
-echo "Restarting stack in detached mode..."
-docker compose up -d
+# 4. Wacht even tot Node-RED is opgestart
+echo "⏳ Wachten tot Node-RED klaar is..."
+sleep 5
 
-# 4. Status check [cite: 32]
-echo -e "${GREEN}>>> Systeem succesvol uitgerold! Status van de services:${NC}"
-docker compose ps
+# 5. Installeer de ontbrekende Node-RED libraries automatisch
+echo "📦 Installing Node-RED dependencies..."
+docker exec -t nodered npm install node-red-contrib-influxdb node-red-dashboard
+
+# 6. Herstart Node-RED om de libraries te laden
+echo "🔄 Herstarten van Node-RED..."
+docker restart nodered
+
+# 7. Opschonen van oude images
+echo "🧹 Cleaning up old images..."
+docker image prune -f
+
+echo ">>> Systeem succesvol uitgerold en geconfigureerd! 🚀"
