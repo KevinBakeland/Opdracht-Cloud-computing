@@ -1,7 +1,7 @@
 {
     "node-red": {
         "name": "node-red",
-        "version": "4.1.7",
+        "version": "5.0.4",
         "local": false,
         "user": false,
         "nodes": {
@@ -427,6 +427,26 @@
             }
         }
     },
+    "node-red-contrib-influxdb3": {
+        "name": "node-red-contrib-influxdb3",
+        "version": "1.1.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "influxdb3": {
+                "name": "influxdb3",
+                "types": [
+                    "influxdb3-config",
+                    "influxdb3-write"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-influxdb3",
+                "file": "/data/node_modules/node-red-contrib-influxdb3/influxdb3.js"
+            }
+        }
+    },
     "node-red-contrib-influxdb": {
         "name": "node-red-contrib-influxdb",
         "version": "0.7.0",
@@ -685,6 +705,67 @@
                 "user": false,
                 "module": "node-red-dashboard",
                 "file": "/data/node_modules/node-red-dashboard/nodes/ui_spacer.js"
+            }
+        }
+    },
+    "node-red-contrib-cron-plus": {
+        "name": "node-red-contrib-cron-plus",
+        "version": "2.2.4",
+        "local": false,
+        "user": false,
+        "nodes": {
+            "cronplus": {
+                "name": "cronplus",
+                "types": [
+                    "cronplus"
+                ],
+                "enabled": true,
+                "local": false,
+                "user": false,
+                "module": "node-red-contrib-cron-plus",
+                "file": "/usr/src/node-red/node_modules/node-red-contrib-cron-plus/cronplus.js"
+            }
+        }
+    },
+    "node-red-contrib-web-worldmap": {
+        "name": "node-red-contrib-web-worldmap",
+        "version": "5.8.1",
+        "local": false,
+        "user": false,
+        "nodes": {
+            "worldmap": {
+                "name": "worldmap",
+                "types": [
+                    "worldmap",
+                    "ui_worldmap",
+                    "worldmap in",
+                    "worldmap-tracks",
+                    "worldmap-hull"
+                ],
+                "enabled": true,
+                "local": false,
+                "user": false,
+                "module": "node-red-contrib-web-worldmap",
+                "file": "/usr/src/node-red/node_modules/node-red-contrib-web-worldmap/worldmap.js"
+            }
+        }
+    },
+    "node-red-node-ui-table": {
+        "name": "node-red-node-ui-table",
+        "version": "0.4.5",
+        "local": false,
+        "user": false,
+        "nodes": {
+            "ui_table": {
+                "name": "ui_table",
+                "types": [
+                    "ui_table"
+                ],
+                "enabled": true,
+                "local": false,
+                "user": false,
+                "module": "node-red-node-ui-table",
+                "file": "/usr/src/node-red/node_modules/node-red-node-ui-table/node.js"
             }
         }
     }

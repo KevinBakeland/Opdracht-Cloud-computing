@@ -101,9 +101,9 @@ chmod +x deploy.sh
 Het script stopt oude containers, haalt images op, bouwt waar nodig en start de stack opnieuw.
 
 ## Toegankelijke diensten
-- Dashboard: `http://10.20.1.8/`
-- Node-RED: `http://10.20.1.8:1880/`
-- Portainer: `http://10.20.1.8:9000/#!/auth`
+- Dashboard: `http://Jouw IP/`
+- Node-RED: `http://Jouw IP:1880/`
+- Portainer: `http://Jouw IP:9000/#!/auth`
 
 ## Controle en monitoring
 - `check_status.sh` controleert of de containers draaien.

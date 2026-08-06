@@ -1,138 +1,516 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Trading Dashboard</title>
+
+    <title>Live Portfolio Tracker</title>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
+
 </head>
+
+
 <body>
-    <!-- Hoofdcontainer voor het dashboard -->
-    <div class="container">
-        <h1>Live Portfolio Tracker</h1>
-        
-        <!-- Kaart voor totaal portefeuille rendement -->
-        <div class="total-card" id="main-portfolio-card">
-            <button class="reset-btn" onclick="resetSession()">Reset Sessie</button>
-            <h2>Totaal Rendement</h2>
-            <div id="total-pl" class="price">€0.00</div>
-            <p id="total-status">Klik op een aandeel voor de live grafiek</p>
-        </div>
 
-        <!-- Raster met aandelenkaarten -->
-        <div class="grid">
-            <!-- Aandelenkaart voor AAPL -->
-            <div class="card stock-card" onclick="openChart('AAPL')">
-                <h3>AAPL (Apple)</h3>
-                <div id="aapl-price" class="price">Laden...</div>
-                <div class="stats">Gem. (1u): <span id="aapl-1h">-</span></div>
-                
-                <div class="action-group">
-                    <div class="holdings-display">In bezit: <b id="aapl-count">0</b> stuks</div>
-                    <div class="button-group">
-                        <button class="buy-btn" onclick="executeTrade('AAPL', 'buy', event)">Koop</button>
-                        <button class="sell-btn" onclick="executeTrade('AAPL', 'sell', event)">Verkoop</button>
-                    </div>
-                </div>
 
-                <div id="aapl-details" class="stock-details" style="display: none;">
-                    <span class="invested">Gem. Inkoop: <b id="aapl-buyprice-display">€0.00</b></span>
-                    <span id="aapl-pl" class="price">€0.00</span>
-                </div>
-            </div>
+<div class="container">
 
-            <!-- Aandelenkaart voor TSLA -->
-            <div class="card stock-card" onclick="openChart('TSLA')">
-                <h3>TSLA (Tesla)</h3>
-                <div id="tsla-price" class="price">Laden...</div>
-                <div class="stats">Gem. (1u): <span id="tsla-1h">-</span></div>
-                
-                <div class="action-group">
-                    <div class="holdings-display">In bezit: <b id="tsla-count">0</b> stuks</div>
-                    <div class="button-group">
-                        <button class="buy-btn" onclick="executeTrade('TSLA', 'buy', event)">Koop</button>
-                        <button class="sell-btn" onclick="executeTrade('TSLA', 'sell', event)">Verkoop</button>
-                    </div>
-                </div>
 
-                <div id="tsla-details" class="stock-details" style="display: none;">
-                    <span class="invested">Gem. Inkoop: <b id="tsla-buyprice-display">€0.00</b></span>
-                    <span id="tsla-pl" class="price">€0.00</span>
-                </div>
-            </div>
+<h1>Live Portfolio Tracker</h1>
 
-            <!-- Aandelenkaart voor KEVB -->
-            <div class="card stock-card" onclick="openChart('KEVB')">
-                <h3>KEVB (Kevin Coin)</h3>
-                <div id="kevb-price" class="price">Laden...</div>
-                <div class="stats">Gem. (1u): <span id="kevb-1h">-</span></div>
-                
-                <div class="action-group">
-                    <div class="holdings-display">In bezit: <b id="kevb-count">0</b> stuks</div>
-                    <div class="button-group">
-                        <button class="buy-btn" onclick="executeTrade('KEVB', 'buy', event)">Koop</button>
-                        <button class="sell-btn" onclick="executeTrade('KEVB', 'sell', event)">Verkoop</button>
-                    </div>
-                </div>
 
-                <div id="kevb-details" class="stock-details" style="display: none;">
-                    <span class="invested">Gem. Inkoop: <b id="kevb-buyprice-display">€0.00</b></span>
-                    <span id="kevb-pl" class="price">€0.00</span>
-                </div>
-            </div>
 
-            <!-- Aandelenkaart voor CATS -->
-            <div class="card stock-card" onclick="openChart('CATS')">
-                <h3>CATS (CryptoCats)</h3>
-                <div id="cats-price" class="price">Laden...</div>
-                <div class="stats">Gem. (1u): <span id="cats-1h">-</span></div>
-                
-                <div class="action-group">
-                    <div class="holdings-display">In bezit: <b id="cats-count">0</b> stuks</div>
-                    <div class="button-group">
-                        <button class="buy-btn" onclick="executeTrade('CATS', 'buy', event)">Koop</button>
-                        <button class="sell-btn" onclick="executeTrade('CATS', 'sell', event)">Verkoop</button>
-                    </div>
-                </div>
+<!-- Portfolio overzicht -->
 
-                <div id="cats-details" class="stock-details" style="display: none;">
-                    <span class="invested">Gem. Inkoop: <b id="cats-buyprice-display">€0.00</b></span>
-                    <span id="cats-pl" class="price">€0.00</span>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="total-card">
 
-    <!-- Modaal venster voor grafieken -->
-    <div id="chart-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeModal()">&times;</span>
-            <div class="modal-header">
-                <h2 id="modal-title">Grafiek</h2>
-                <div class="filter-group">
-                    <button onclick="updateChartTime('1h')" id="btn-1h">1u</button>
-                    <button onclick="updateChartTime('6h')" id="btn-6h">6u</button>
-                    <button onclick="updateChartTime('24h')" id="btn-24h">24u</button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <canvas id="stockChart"></canvas>
-            </div>
-        </div>
-    </div>
 
-    <!-- Nieuws ticker onderaan -->
-    <div class="news-ticker">
-        <div class="ticker-wrap">
-            <div id="news-content" class="ticker-item">
-                Wachten op het laatste nieuws...
-            </div>
-        </div>
-    </div>
+<button class="reset-btn" onclick="resetSession()">
+    Nieuw spel
+</button>
 
-    <!-- JavaScript bestanden -->
-    <script src="js/news.js"></script>
-    <script src="js/script.js"></script>
+
+<h2>Portfolio Overzicht</h2>
+
+
+<div class="portfolio-stats">
+
+
+<div class="stat-box">
+
+<h3>💰 Cash</h3>
+
+<div id="cash-display" class="price">
+€10000.00
+</div>
+
+</div>
+
+
+
+<div class="stat-box">
+
+<h3>📦 Aandelen waarde</h3>
+
+<div id="portfolio-value" class="price">
+€0.00
+</div>
+
+</div>
+
+
+
+<div class="stat-box">
+
+<h3>📈 Winst / Verlies</h3>
+
+<div id="total-pl" class="price">
+€0.00
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<p id="total-status">
+Klik op een aandeel voor de live grafiek
+</p>
+
+
+</div>
+
+
+
+
+
+<!-- STOCKS -->
+
+<div class="grid">
+
+
+
+
+
+<!-- AAPL -->
+
+<div class="card stock-card" onclick="openChart('AAPL')">
+
+
+<h3>AAPL (Apple)</h3>
+
+
+<div id="aapl-price" class="price">
+Laden...
+</div>
+
+
+
+<div class="action-group">
+
+
+<div class="holdings-display">
+
+In bezit:
+
+<b id="aapl-count">
+0
+</b>
+
+stuks
+
+</div>
+
+
+
+<div class="button-group">
+
+
+<button class="buy-btn"
+onclick="executeTrade('AAPL','buy',event)">
+Koop
+</button>
+
+
+
+<button class="sell-btn"
+onclick="executeTrade('AAPL','sell',event)">
+Verkoop
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="stock-details">
+
+<span>
+Winst/verlies:
+</span>
+
+
+<span id="aapl-pl">
+€0.00
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- TSLA -->
+
+<div class="card stock-card" onclick="openChart('TSLA')">
+
+
+<h3>TSLA (Tesla)</h3>
+
+
+<div id="tsla-price" class="price">
+Laden...
+</div>
+
+
+
+<div class="action-group">
+
+
+<div class="holdings-display">
+
+In bezit:
+
+<b id="tsla-count">
+0
+</b>
+
+stuks
+
+</div>
+
+
+
+<div class="button-group">
+
+
+<button class="buy-btn"
+onclick="executeTrade('TSLA','buy',event)">
+Koop
+</button>
+
+
+
+<button class="sell-btn"
+onclick="executeTrade('TSLA','sell',event)">
+Verkoop
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="stock-details">
+
+<span>
+Winst/verlies:
+</span>
+
+
+<span id="tsla-pl">
+€0.00
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- KEVB -->
+
+<div class="card stock-card" onclick="openChart('KEVB')">
+
+
+<h3>KEVB (Kevin Coin)</h3>
+
+
+<div id="kevb-price" class="price">
+Laden...
+</div>
+
+
+
+<div class="action-group">
+
+
+<div class="holdings-display">
+
+In bezit:
+
+<b id="kevb-count">
+0
+</b>
+
+stuks
+
+</div>
+
+
+
+<div class="button-group">
+
+
+<button class="buy-btn"
+onclick="executeTrade('KEVB','buy',event)">
+Koop
+</button>
+
+
+
+<button class="sell-btn"
+onclick="executeTrade('KEVB','sell',event)">
+Verkoop
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="stock-details">
+
+<span>
+Winst/verlies:
+</span>
+
+
+<span id="kevb-pl">
+€0.00
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- CATS -->
+
+<div class="card stock-card" onclick="openChart('CATS')">
+
+
+<h3>CATS (CryptoCats)</h3>
+
+
+<div id="cats-price" class="price">
+Laden...
+</div>
+
+
+
+<div class="action-group">
+
+
+<div class="holdings-display">
+
+In bezit:
+
+<b id="cats-count">
+0
+</b>
+
+stuks
+
+</div>
+
+
+
+<div class="button-group">
+
+
+<button class="buy-btn"
+onclick="executeTrade('CATS','buy',event)">
+Koop
+</button>
+
+
+
+<button class="sell-btn"
+onclick="executeTrade('CATS','sell',event)">
+Verkoop
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="stock-details">
+
+<span>
+Winst/verlies:
+</span>
+
+
+<span id="cats-pl">
+€0.00
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+<!-- Grafiek popup -->
+
+
+<div id="chart-modal" class="modal">
+
+
+<div class="modal-content">
+
+
+<span class="close-button" onclick="closeModal()">
+&times;
+</span>
+
+
+
+<div class="modal-header">
+
+
+<h2 id="modal-title">
+Grafiek
+</h2>
+
+
+
+<div class="filter-group">
+
+
+<button onclick="updateChartTime('1h')">
+1u
+</button>
+
+
+<button onclick="updateChartTime('6h')">
+6u
+</button>
+
+
+<button onclick="updateChartTime('24h')">
+24u
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="chart-container">
+
+<canvas id="stockChart"></canvas>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Nieuws -->
+
+
+<div class="news-ticker">
+
+
+<div class="ticker-wrap">
+
+
+<div id="news-content" class="ticker-item">
+
+Wachten op het laatste nieuws...
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script src="js/news.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/script.js"></script>
+
+
 </body>
+
 </html>

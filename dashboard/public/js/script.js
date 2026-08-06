@@ -1,282 +1,650 @@
-// Hoofdconstanten voor API URLs
-const INFLUX_URL = `http://${window.location.hostname}:8086/query?db=sensors&q=`;
-const NODE_RED_URL = `http://${window.location.hostname}:1880`;
+// =====================================
+// CONFIG
+// =====================================
 
-// Huidige prijzen en sessie winst
-let currentPrices = { AAPL: 0, TSLA: 0, KEVB: 0, CATS: 0 };
-let sessionProfit = 0; // Winst uit verkochte aandelen (de "vastgezette" winst)
+const NODE_RED_URL = "/nodered";
 
-// Portfolio gegevens
-let userPortfolio = {
-    AAPL: { amount: 0, totalCost: 0 },
-    TSLA: { amount: 0, totalCost: 0 },
-    KEVB: { amount: 0, totalCost: 0 },
-    CATS: { amount: 0, totalCost: 0 }
+
+
+// =====================================
+// STOCK DATA
+// =====================================
+
+let currentPrices = {
+    AAPL: 0,
+    TSLA: 0,
+    KEVB: 0,
+    CATS: 0
 };
 
-let myChart;
-let currentActiveStock = '';
 
-// --- 1. PORTFOLIO & HANDEL LOGICA ---
 
-// Laad portfolio en sessie winst
-async function loadHoldings() {
-    try {
-        // Laad sessionProfit uit browser geheugen
-        sessionProfit = parseFloat(localStorage.getItem('sessionProfit')) || 0;
+let priceHistory = {
+    AAPL: [],
+    TSLA: [],
+    KEVB: [],
+    CATS: []
+};
 
-        const res = await fetch(`${NODE_RED_URL}/get-portfolio`);
-        const cloudData = await res.json();
-        
-        const stocks = ['AAPL', 'TSLA', 'KEVB', 'CATS'];
-        stocks.forEach(stock => {
-            if (cloudData[stock]) {
-                userPortfolio[stock].amount = cloudData[stock].amount || 0;
-                userPortfolio[stock].totalCost = cloudData[stock].totalCost || 0;
-            }
-        });
-        calculatePortfolio(); 
-    } catch (e) {
-        console.error("Laden van portfolio mislukt:", e);
-    }
-}
 
-// Sla portfolio op naar cloud
-async function saveToCloud(stock, amount, totalCost) {
-    try {
-        await fetch(`${NODE_RED_URL}/update-portfolio?stock=${stock}&amount=${amount}&totalCost=${totalCost}`);
-    } catch (e) {
-        console.error("Opslaan mislukt:", e);
-    }
-}
 
-// Voer koop/verkoop transactie uit
-function executeTrade(stock, type, event) {
-    event.stopPropagation(); // Voorkomt dat de grafiek opent bij het klikken op een knop
-    const stockKey = stock.toUpperCase();
-    const priceNow = currentPrices[stockKey];
-    const portfolio = userPortfolio[stockKey];
-    
-    if (!priceNow || priceNow <= 0) {
-        alert("Wacht op live prijs...");
-        return;
-    }
 
-    if (type === 'buy') {
-        portfolio.amount += 1;
-        portfolio.totalCost += priceNow;
-    } else if (type === 'sell') {
-        if (portfolio.amount > 0) {
-            const avgPrice = portfolio.totalCost / portfolio.amount;
-            
-            // Bereken winst van deze verkoop en voeg toe aan sessie
-            const profitOnSale = priceNow - avgPrice;
-            sessionProfit += profitOnSale;
-            localStorage.setItem('sessionProfit', sessionProfit);
+// =====================================
+// TRADING DATA LADEN
+// =====================================
 
-            portfolio.amount -= 1;
-            portfolio.totalCost -= avgPrice;
-        } else {
-            alert("Je hebt geen aandelen om te verkopen!");
-            return;
+let cash =
+    Number(localStorage.getItem("cash")) || 10000;
+
+
+let realizedProfit =
+    Number(localStorage.getItem("realizedProfit")) || 0;
+
+
+
+let userPortfolio =
+    JSON.parse(
+        localStorage.getItem("userPortfolio")
+    )
+    ||
+    {
+
+        AAPL:{
+            amount:0,
+            totalCost:0
+        },
+
+        TSLA:{
+            amount:0,
+            totalCost:0
+        },
+
+        KEVB:{
+            amount:0,
+            totalCost:0
+        },
+
+        CATS:{
+            amount:0,
+            totalCost:0
         }
-    }
 
-    saveToCloud(stockKey, portfolio.amount, portfolio.totalCost);
-    calculatePortfolio();
-}
+    };
 
-// Reset de gehele sessie
-function resetSession() {
-    const zekerweten = confirm("Weet je zeker dat je ALLES wilt resetten? Je winst en je bezittingen gaan naar €0.");
-    
-    if (zekerweten) {
-        sessionProfit = 0;
-        localStorage.setItem('sessionProfit', 0);
-        
-        const stocks = ['AAPL', 'TSLA', 'KEVB', 'CATS'];
-        stocks.forEach(stock => {
-            userPortfolio[stock].amount = 0;
-            userPortfolio[stock].totalCost = 0;
-            saveToCloud(stock, 0, 0);
+
+
+
+
+// =====================================
+// LIVE STOCK DATA
+// =====================================
+
+async function fetchData(){
+
+    try{
+
+
+        const response =
+            await fetch(
+                `${NODE_RED_URL}/stocks?t=${Date.now()}`
+            );
+
+
+        const stocks =
+            await response.json();
+
+
+
+        Object.keys(stocks).forEach(symbol=>{
+
+
+            const price =
+                Number(stocks[symbol]);
+
+
+
+            currentPrices[symbol] =
+                price;
+
+
+
+            priceHistory[symbol].push({
+
+                time:new Date(),
+
+                price:price
+
+            });
+
+
+
+            if(priceHistory[symbol].length > 200){
+
+                priceHistory[symbol].shift();
+
+            }
+
+
+
+            const element =
+                document.getElementById(
+                    `${symbol.toLowerCase()}-price`
+                );
+
+
+
+            if(element){
+
+                element.innerText =
+                    "€" + price.toFixed(2);
+
+            }
+
+
         });
+
+
 
         calculatePortfolio();
+
+
     }
+    catch(error){
+
+        console.error(
+            "Stock data fout:",
+            error
+        );
+
+    }
+
 }
 
-// Bereken totaal portfolio rendement
-function calculatePortfolio() {
-    let currentUnrealizedProfit = 0;
-    const stocks = ['AAPL', 'TSLA', 'KEVB', 'CATS'];
-    
-    stocks.forEach(stock => {
-        const stockLower = stock.toLowerCase();
-        const data = userPortfolio[stock.toUpperCase()];
-        
-        const countEl = document.getElementById(`${stockLower}-count`);
-        const buyPriceDisplayEl = document.getElementById(`${stockLower}-buyprice-display`);
-        const plEl = document.getElementById(`${stockLower}-pl`);
-        const detailsDiv = document.getElementById(`${stockLower}-details`);
 
-        if (data.amount > 0) {
-            const avgBuyPrice = data.totalCost / data.amount;
-            const currentPrice = currentPrices[stock.toUpperCase()] || 0;
-            const profit = (currentPrice - avgBuyPrice) * data.amount;
-            
-            currentUnrealizedProfit += profit;
-            
-            if (countEl) countEl.innerText = data.amount;
-            if (buyPriceDisplayEl) buyPriceDisplayEl.innerText = "€" + avgBuyPrice.toFixed(2);
-            if (plEl) {
-                plEl.innerText = (profit >= 0 ? "+" : "") + "€" + profit.toFixed(2);
-                plEl.className = profit >= 0 ? "price profit" : "price loss";
-            }
-            if (detailsDiv) detailsDiv.style.display = "flex";
-        } else {
-            if (detailsDiv) detailsDiv.style.display = "none";
-            if (countEl) countEl.innerText = "0";
+
+
+
+
+// =====================================
+// BUY / SELL
+// =====================================
+
+function executeTrade(stock,type,event){
+
+
+    event.stopPropagation();
+
+
+
+    const price =
+        currentPrices[stock];
+
+
+    const portfolio =
+        userPortfolio[stock];
+
+
+
+    if(price <= 0){
+
+        alert(
+            "Geen prijs beschikbaar"
+        );
+
+        return;
+
+    }
+
+
+
+
+
+    // =====================
+    // KOPEN
+    // =====================
+
+    if(type === "buy"){
+
+
+        if(cash < price){
+
+            alert(
+                "Niet genoeg geld"
+            );
+
+            return;
+
         }
+
+
+
+        portfolio.amount++;
+
+        portfolio.totalCost += price;
+
+
+        cash -= price;
+
+
+    }
+
+
+
+
+
+
+    // =====================
+    // VERKOPEN
+    // =====================
+
+    if(type === "sell"){
+
+
+
+        if(portfolio.amount <= 0){
+
+            alert(
+                "Je bezit geen aandelen"
+            );
+
+            return;
+
+        }
+
+
+
+        const average =
+            portfolio.totalCost /
+            portfolio.amount;
+
+
+
+        const profit =
+            price - average;
+
+
+
+        realizedProfit += profit;
+
+
+
+        portfolio.amount--;
+
+        portfolio.totalCost -= average;
+
+
+        cash += price;
+
+
+    }
+
+
+
+    saveGame();
+
+
+    calculatePortfolio();
+
+
+}
+
+
+
+
+
+
+
+
+// =====================================
+// OPSLAAN
+// =====================================
+
+function saveGame(){
+
+
+    localStorage.setItem(
+        "cash",
+        cash
+    );
+
+
+    localStorage.setItem(
+        "realizedProfit",
+        realizedProfit
+    );
+
+
+    localStorage.setItem(
+        "userPortfolio",
+        JSON.stringify(userPortfolio)
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+// =====================================
+// PORTFOLIO BEREKENING
+// =====================================
+
+function calculatePortfolio(){
+
+
+
+    let portfolioValue =
+        cash;
+
+
+
+    let totalProfit =
+        realizedProfit;
+
+
+
+
+    Object.keys(userPortfolio).forEach(stock=>{
+
+
+        const data =
+            userPortfolio[stock];
+
+
+        const price =
+            currentPrices[stock];
+
+
+
+        const lower =
+            stock.toLowerCase();
+
+
+
+
+        const count =
+            document.getElementById(
+                `${lower}-count`
+            );
+
+
+
+        if(count){
+
+            count.innerText =
+                data.amount;
+
+        }
+
+
+
+
+
+
+        if(data.amount > 0){
+
+
+
+            const currentValue =
+                data.amount * price;
+
+
+
+            portfolioValue +=
+                currentValue;
+
+
+
+
+
+            const average =
+                data.totalCost /
+                data.amount;
+
+
+
+
+
+            const unrealizedProfit =
+                (price-average)
+                *
+                data.amount;
+
+
+
+            totalProfit +=
+                unrealizedProfit;
+
+
+
+
+
+
+            const buy =
+                document.getElementById(
+                    `${lower}-buyprice-display`
+                );
+
+
+
+            if(buy){
+
+                buy.innerText =
+                    "€" +
+                    average.toFixed(2);
+
+            }
+
+
+
+
+
+
+
+            const pl =
+                document.getElementById(
+                    `${lower}-pl`
+                );
+
+
+
+            if(pl){
+
+                pl.innerText =
+
+                    (unrealizedProfit >= 0 ? "+" : "")
+                    +
+                    "€"
+                    +
+                    unrealizedProfit.toFixed(2);
+
+            }
+
+
+
+        }
+
+
     });
 
-    // Totaal = Gerealiseerde winst + Huidige schommelende winst
-    const totalRendement = sessionProfit + currentUnrealizedProfit;
 
-    const plElement = document.getElementById('total-pl');
-    const totalCard = document.getElementById('main-portfolio-card');
 
-    if (plElement) {
-        plElement.innerText = (totalRendement >= 0 ? "+" : "") + "€" + totalRendement.toFixed(2);
-        plElement.className = totalRendement >= 0 ? "price profit" : "price loss";
-        
-        // Verander de gloed van de kaart
-        if (totalCard) {
-            totalCard.style.borderColor = totalRendement >= 0 ? "#0ecb81" : "#f6465d";
-        }
+
+
+
+    const total =
+        document.getElementById(
+            "total-pl"
+        );
+
+
+
+    if(total){
+
+
+        total.innerText =
+
+            (totalProfit >= 0 ? "+" : "")
+            +
+            "€"
+            +
+            totalProfit.toFixed(2);
+
+
     }
-}
 
-// --- 2. DATA FETCHING ---
 
-// Haal live prijzen en gemiddelden op
-async function fetchData() {
-    const liveQuery = encodeURIComponent('SELECT last("price") FROM "stock_data" GROUP BY "stock"');
-    const avgQuery = encodeURIComponent('SELECT MEAN("price") FROM "stock_data" WHERE time > now() - 1h GROUP BY "stock"');
 
-    try {
-        const resLive = await fetch(INFLUX_URL + liveQuery);
-        const dataLive = await resLive.json();
-        
-        if (dataLive.results && dataLive.results[0].series) {
-            dataLive.results[0].series.forEach(series => {
-                const stock = series.tags.stock.toUpperCase();
-                const price = series.values[0][1];
-                currentPrices[stock] = price;
-                const priceEl = document.getElementById(`${stock.toLowerCase()}-price`);
-                if (priceEl) priceEl.innerText = "€" + parseFloat(price).toFixed(2);
-            });
-            calculatePortfolio(); 
-        }
 
-        const resAvg = await fetch(INFLUX_URL + avgQuery);
-        const dataAvg = await resAvg.json();
-        if (dataAvg.results && dataAvg.results[0].series) {
-            dataAvg.results[0].series.forEach(series => {
-                const stock = series.tags.stock.toUpperCase();
-                const avgPrice = series.values[0][1];
-                const avgEl = document.getElementById(`${stock.toLowerCase()}-1h`);
-                if (avgEl) avgEl.innerText = "€" + avgPrice.toFixed(2);
-            });
-        }
-    } catch (error) {
-        console.error("Fout bij ophalen prijzen:", error);
+
+    const cashDisplay =
+        document.getElementById(
+            "cash-display"
+        );
+
+
+
+    if(cashDisplay){
+
+        cashDisplay.innerText =
+            "€" + cash.toFixed(2);
+
     }
-}
 
-// --- 3. MODAL & CHART LOGICA ---
 
-// Open grafiek modaal voor een aandeel
-async function openChart(stock) {
-    currentActiveStock = stock;
-    document.getElementById('modal-title').innerText = `${stock} Prijsverloop`;
-    document.getElementById('chart-modal').style.display = 'block';
-    updateChartTime('1h');
-}
 
-// Sluit grafiek modaal
-function closeModal() {
-    document.getElementById('chart-modal').style.display = 'none';
-}
 
-// Sluit modaal bij klik buiten
-window.onclick = function(event) {
-    const modal = document.getElementById('chart-modal');
-    if (event.target == modal) closeModal();
-}
 
-// Update grafiek voor gekozen tijdframe
-async function updateChartTime(timeframe) {
-    // UI: Actieve knop markeren
-    document.querySelectorAll('.filter-group button').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById(`btn-${timeframe}`);
-    if (activeBtn) activeBtn.classList.add('active');
 
-    const groupTime = timeframe === '1h' ? '1m' : '10m';
-    const query = encodeURIComponent(`SELECT mean("price") FROM "stock_data" WHERE "stock"='${currentActiveStock}' AND time > now() - ${timeframe} GROUP BY time(${groupTime}) FILL(previous)`);
-    
-    try {
-        const res = await fetch(INFLUX_URL + query);
-        const data = await res.json();
-        
-        if (data.results && data.results[0].series) {
-            const points = data.results[0].series[0].values;
-            const labels = points.map(p => new Date(p[0]).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-            const prices = points.map(p => p[1]);
-            renderChart(labels, prices);
-        }
-    } catch (e) {
-        console.error("Grafiek data error:", e);
+    const portfolioDisplay =
+        document.getElementById(
+            "portfolio-value"
+        );
+
+
+
+    if(portfolioDisplay){
+
+        portfolioDisplay.innerText =
+            "€" + portfolioValue.toFixed(2);
+
     }
+
+
+
+
+
+
+
+    const status =
+        document.getElementById(
+            "total-status"
+        );
+
+
+
+    if(status){
+
+        status.innerText =
+
+            "Cash: €"
+            +
+            cash.toFixed(2)
+            +
+            " | Portfolio: €"
+            +
+            portfolioValue.toFixed(2);
+
+    }
+
+
 }
 
-// Render de grafiek met Chart.js
-function renderChart(labels, prices) {
-    const ctx = document.getElementById('stockChart').getContext('2d');
-    if (myChart) myChart.destroy();
 
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: `Prijs ${currentActiveStock}`,
-                data: prices,
-                borderColor: '#f0b90b',
-                backgroundColor: 'rgba(240, 185, 11, 0.1)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 0,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: '#2d333a' }, ticks: { color: '#848e9c' } },
-                x: { grid: { display: false }, ticks: { color: '#848e9c', maxRotation: 0 } }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { mode: 'index', intersect: false }
-            }
-        }
+
+
+
+
+
+
+// =====================================
+// NIEUW SPEL
+// =====================================
+
+function resetSession(){
+
+
+    if(!confirm(
+        "Nieuw spel starten?"
+    ))
+
+    return;
+
+
+
+
+    cash = 10000;
+
+
+    realizedProfit = 0;
+
+
+
+    Object.keys(userPortfolio)
+    .forEach(stock=>{
+
+
+        userPortfolio[stock].amount = 0;
+
+
+        userPortfolio[stock].totalCost = 0;
+
+
     });
+
+
+
+
+    saveGame();
+
+
+
+    calculatePortfolio();
+
+
 }
 
-// Start de applicatie bij laden
-window.onload = () => {
-    loadHoldings();
-    setInterval(fetchData, 5000);
+
+
+
+
+
+
+
+// =====================================
+// START
+// =====================================
+
+window.onload = ()=>{
+
+
     fetchData();
+
+
+
+    calculatePortfolio();
+
+
+
+    setInterval(
+        fetchData,
+        5000
+    );
+
+
 };

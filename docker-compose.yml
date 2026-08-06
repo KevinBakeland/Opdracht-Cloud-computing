@@ -10,6 +10,7 @@ services:
       - ./mosquitto/log:/mosquitto/log
     networks:
       - iot
+    restart: unless-stopped
 
   nodered:
     image: nodered/node-red
@@ -22,18 +23,45 @@ services:
       - mosquitto
     networks:
       - iot
+    restart: unless-stopped
 
   influxdb:
-    image: influxdb:1.8
+    image: influxdb:3-core
     container_name: influxdb
     ports:
-      - "8086:8086"
+      - "8181:8181"
     volumes:
-      - ./influxdb:/var/lib/influxdb
-    environment:
-      - INFLUXDB_DB=sensors
+      - ./influxdb3/data:/var/lib/influxdb3/data
+      - ./influxdb3/plugins:/var/lib/influxdb3/plugins
+    command:
+      - influxdb3
+      - serve
+      - --node-id=node0
+      - --object-store=file
+      - --data-dir=/var/lib/influxdb3/data
+      - --plugin-dir=/var/lib/influxdb3/plugins
+      - --without-auth
     networks:
       - iot
+    restart: unless-stopped
+
+  influxdb-explorer:
+    image: influxdata/influxdb3-ui:latest
+    container_name: influxdb-explorer
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./influxdb3-ui/db:/db:rw
+      - ./influxdb3-ui/config:/app-root/config:ro
+    environment:
+      - SESSION_SECRET_KEY=student123
+    command:
+      - "--mode=admin"
+    depends_on:
+      - influxdb
+    networks:
+      - iot
+    restart: unless-stopped
 
   portainer:
     image: portainer/portainer-ce
@@ -45,6 +73,16 @@ services:
       - ./portainer:/data
     networks:
       - iot
+    restart: unless-stopped
+
+  stock-generator:
+    build: ./stock-generator
+    container_name: stock-generator
+    depends_on:
+      - mosquitto
+    networks:
+      - iot
+    restart: unless-stopped
 
   nginx_proxy:
     image: nginx:latest
@@ -53,6 +91,7 @@ services:
       - "80:80"
     volumes:
       - ./dashboard/public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - iot
     restart: unless-stopped
