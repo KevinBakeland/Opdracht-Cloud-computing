@@ -1,15 +1,53 @@
-# InfluxDB data
+# =========================
+# InfluxDB
+# =========================
 influxdb3/data/
 influxdb3/plugins/
 influxdb3-ui/db/
 
-# Node
+# =========================
+# Portainer
+# =========================
+portainer/
+
+# =========================
+# Uptime Kuma
+# =========================
+uptime-kuma/
+
+# =========================
+# Mosquitto runtime data
+# =========================
+mosquitto/data/
+mosquitto/log/
+
+# =========================
+# Node / Node-RED
+# =========================
 node_modules/
 nodered/node_modules/
+nodered/.npm/
 
+# =========================
 # Logs
+# =========================
 *.log
 
+# =========================
 # OS bestanden
+# =========================
 .DS_Store
 Thumbs.db
+
+# =========================
+# Editor / IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+!.env.example

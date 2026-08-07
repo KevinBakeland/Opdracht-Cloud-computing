@@ -73,6 +73,8 @@ echo "👉 Dashboard:          http://$IP"
 echo "👉 InfluxDB Explorer:  http://$IP:8888"
 echo "👉 Node-RED:           http://$IP:1880"
 echo "👉 Portainer:          http://$IP:9000"
+echo "👉 Uptime-Kuma:        http://$IP:3001"
+
 
 echo ""
 echo "📊 InfluxDB database: portfolio"

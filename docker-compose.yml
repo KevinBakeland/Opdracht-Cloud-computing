@@ -1,4 +1,5 @@
 services:
+
   mosquitto:
     image: eclipse-mosquitto
     container_name: mosquitto
@@ -12,6 +13,7 @@ services:
       - iot
     restart: unless-stopped
 
+
   nodered:
     image: nodered/node-red
     container_name: nodered
@@ -24,6 +26,7 @@ services:
     networks:
       - iot
     restart: unless-stopped
+
 
   influxdb:
     image: influxdb:3-core
@@ -45,6 +48,7 @@ services:
       - iot
     restart: unless-stopped
 
+
   influxdb-explorer:
     image: influxdata/influxdb3-ui:latest
     container_name: influxdb-explorer
@@ -63,17 +67,55 @@ services:
       - iot
     restart: unless-stopped
 
+
+  # Beveiligde Docker API toegang voor Portainer
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: docker-socket-proxy
+
+    environment:
+      # Leesrechten
+      CONTAINERS: 1
+      IMAGES: 1
+      INFO: 1
+      NETWORKS: 1
+      VOLUMES: 1
+      VERSION: 1
+      EVENTS: 1
+
+      # Geen wijzigingen uitvoeren
+      POST: 0
+      DELETE: 0
+      BUILD: 0
+      EXEC: 0
+      AUTH: 0
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    expose:
+      - "2375"
+
+    networks:
+      - iot
+
+    restart: unless-stopped
+
+
   portainer:
     image: portainer/portainer-ce
     container_name: portainer
     ports:
       - "9000:9000"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./portainer:/data
+    command: -H tcp://docker-socket-proxy:2375
+    depends_on:
+      - docker-socket-proxy
     networks:
       - iot
     restart: unless-stopped
+
 
   stock-generator:
     build: ./stock-generator
@@ -83,6 +125,7 @@ services:
     networks:
       - iot
     restart: unless-stopped
+
 
   nginx_proxy:
     image: nginx:latest
@@ -95,6 +138,19 @@ services:
     networks:
       - iot
     restart: unless-stopped
+
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./uptime-kuma:/app/data
+    networks:
+      - iot
+    restart: unless-stopped
+
 
 networks:
   iot:
