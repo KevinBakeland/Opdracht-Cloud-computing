@@ -1,24 +1,28 @@
 # Smart Gateway Dashboard
 
 ## Overzicht
-Dit project is een slimme gateway voor een live trading dashboard. Het gebruikt Node-RED om fictieve stock- en crypto-prijsdata te genereren, InfluxDB om de tijdreeksdata op te slaan, en een Nginx-hosted frontend om live portfoliostatus, winst/verlies en grafieken te tonen.
+Dit project is een slimme gateway voor een live trading dashboard.
+Het gebruikt een Python-script dat in een Docker-container draait om fictieve crypto-data te genereren en deze via Mosquitto op een MQTT-server te publiceren.
+Node-RED haalt vervolgens de data op via MQTT en slaat deze op in een InfluxDB-database.
+Node-RED wordt ook gebruikt om de data uit InfluxDB op te halen en deze weer te geven op het dashboard.
 
 <img src="img/stock.png" width="700">
 
 
 ## Wat doet het project?
-- Node-RED genereert en verwerkt realtime stockdata voor vier stocks: `AAPL`, `TSLA`, `KEVB` en `CATS`.
+- De Python script genereert en verwerkt realtime stockdata voor vier stocks: `AAPL`, `TSLA`, `KEVB` en `CATS`.
 - De gegenereerde data wordt opgeslagen in InfluxDB onder de database `sensors`.
-- Het dashboard haalt live prijzen op, toont het gemiddelde van de laatste 1 uur, en biedt een interactieve grafiek per aandeel.
-- Gebruikers kunnen kopen en verkopen, waarna portfoliowaardes worden bijgewerkt in Node-RED en lokaal getoond in de frontend.
+- Het dashboard haalt live prijzen op, toont de prijs van de stock, en biedt een interactieve grafiek per aandeel.
+- Gebruikers kunnen kopen en verkopen in ene leuk spel om proberen geld te verdienen
 
 ## Architectuur
 Het project draait als Docker stack met de volgende services:
 - `mosquitto` - MQTT broker voor Node-RED communicatie.
-- `nodered` - Node-RED runtime voor data-generatie, logica en opslag.
+- `nodered` - Node-RED runtime om data te plaatsen op influxDB en data te tonen op de database.
 - `influxdb` - Tijdreeksdatabase voor prijsdata.
 - `dashboard` - Nginx-served statische website op basis van `dashboard/public`.
 - `portainer` - Beheerinterface voor containers.
+- `Uptime-Kuma` - Voor emails te krijgen mocht een docker uitvallen
 
 ## Belangrijke mappen
 - `/root/smart-gateway/nodered` - Node-RED data en flows.
@@ -32,65 +36,8 @@ Node-RED is mijn centrale verwerkingslaag in dit project en bevat drie hoofdblok
 - een verwerkingsstroom die de data valideert en omzet naar InfluxDB,
 - en een portfolio-sync via HTTP endpoints.
 
-## ⚙️ Diepgaande Node-RED Logica
-In dit project is Node-RED de centrale verwerkingseenheid. De flow is opgebouwd uit drie cruciale logische lagen in **Function Nodes**.
-
-### 1. Prijssimulatie (Random Walk)
-De gateway genereert zijn eigen marktbewegingen. Elke 10 seconden wordt de prijs van de vier aandelen bijgewerkt met een willekeurige factor tussen -2% en +2%. Dit zorgt voor een realistische, bewegende grafiek in het dashboard.
-* **Techniek**: Gebruik van `Math.random()` gecombineerd met `flow.set/get` om de vorige prijs te onthouden.
-* **Startwaarden**:
-  - `AAPL`: `150.00`
-  - `TSLA`: `200.00`
-  - `KEVB`: `50.00`
-  - `CATS`: `75.00`
-* **Output**: vier MQTT-berichten naar topics zoals `market/AAPL`, `market/TSLA`, `market/KEVB` en `market/CATS`.
-
-<img src="img/MQTT.png" width="700">
-
-### 2. Dynamische Dataverwerking & Portfolio Logica
-In plaats van statische berekeningen, hanteert de gateway een dynamisch systeem waarbij de portfolio-status realtime wordt bijgewerkt op basis van gebruikersinteractie.
-
-* **Input**: De gateway ontvangt live koersen via `market/#` en koop/verkoop signalen via HTTP/MQTT.
-* **State Management (Global Context)**: 
-    - De gateway houdt per aandeel de **gemiddelde inkoopprijs** (`buyPrice`) en het **aantal aandelen** in bezit bij. 
-    - Bij een nieuwe "Koop" transactie wordt de inkoopprijs dynamisch herberekend.
-* **Validatie**: 
-    - Controleert op geldige getallen en positieve prijzen.
-    - Voorkomt "short selling" (je kunt niet meer verkopen dan je in bezit hebt).
-* **Live Rendementsberekening**:
-    Het dashboard toont niet alleen de prijs, maar berekent continu de ongerealiseerde winst/verlies op de huidige positie:
-
-* **Output**: Een verrijkt JSON-object naar het dashboard en opslag in InfluxDB (`measurement: "portfolio_stats"`) om de groei van het vermogen over tijd te monitoren.
-
-### 3. Portfolio Cloud Sync & Global State
-De frontend synchroniseert portfolio-data met Node-RED via HTTP endpoints.
-* **Endpoint** `/get-portfolio`: haalt de huidige portfolio op uit `global.get('portfolio')` en retourneert die als response.
-* **Endpoint** `/update-portfolio`: ontvangt een payload met `stock`, `amount` en `totalCost`, werkt het portfolio object bij en slaat het op met `global.set('portfolio', portfolio)`.
-* **Voordeel**: je portfolio blijft bewaard in Node-RED, ook als de browser wordt ververst of de frontend opnieuw wordt geladen.
-
-### 4. Flow-structuur in Node-RED
-De flow is opgebouwd als:
-- `Market Simulator (Sensoren)`:
-  - Inject node `Elke 10 seconden`
-  - Function node `Stock Price Generator`
-  - MQTT node `Mosquitto Broker`
-- `Data Verwerking & Validatie`:
-  - MQTT subscribe node `Subscribe Market`
-  - Function node `Validatie & P/L Berekening`
-  - InfluxDB output node `Sensors DB`
-- `Portfolio Cloud Sync`:
-  - HTTP input node `[get] /get-portfolio`
-  - Function node `Get Global Stats`
-  - HTTP response node
-  - HTTP input node `[get] /update-portfolio`
-  - Function node `Save to Global`
-  - HTTP response node
-
-<img src="img/Flow.png" width="700">
----
-
 ## Installatie en deployment
-Voer dit uit vanuit de map `/root/smart-gateway`:
+Voer dit uit in de map:
 
 ```bash
 cd /root/smart-gateway
@@ -98,27 +45,11 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-Het script stopt oude containers, haalt images op, bouwt waar nodig en start de stack opnieuw.
-
-## Toegankelijke diensten
-- Dashboard: `http://Jouw IP/`
-- Node-RED: `http://Jouw IP:1880/`
-- Portainer: `http://Jouw IP:9000/#!/auth`
-
-## Controle en monitoring
-- `check_status.sh` controleert of de containers draaien.
-- Het script kan handmatig worden gestart met:
-
-```bash
-chmod +x /root/smart-gateway/check_status.sh
-./check_status.sh
-```
-
-- Er is ook een cronjob die dit elk uur uitvoert.
-- Kijk in `/root/logs.txt` voor tijdstippen en eventuele uitvalmeldingen.
+Het `deploy.sh`-script automatiseert het deploymentproces. Het haalt de nieuwste versie van het project op via GitHub, stopt en herstart de Docker-containers en zorgt dat de nodige mappen en rechten correct zijn ingesteld.
+Daarnaast controleert het script of InfluxDB actief is, maakt automatisch de `portfolio`-database aan en installeert de benodigde Node-RED library.
+Na de deployment worden de links naar de verschillende services weergegeven.
 
 ## Gebruik van het dashboard
-- Open het dashboard via `http://10.20.1.8/`.
 - Klik op een kaart om een live grafiek van het aandeel te openen.
 - Gebruik de knoppen `Koop` en `Verkoop` om transacties te simuleren.
 - De sectie `Totaal Rendement` toont je huidige winst/verlies inclusief vaste winst uit verkochte posities.
@@ -128,45 +59,7 @@ chmod +x /root/smart-gateway/check_status.sh
 
 ## Aanvullende info
 - De frontend haalt live data uit InfluxDB en gebruikt Chart.js voor grafieken.
-- Node-RED gebruikt de dependencies `node-red-contrib-influxdb` .
 
-## 🎁 Bonus: Backup & Disaster Recovery
-Om de integriteit van de verzamelde marktdata te garanderen en te voldoen aan industriële standaarden, is een geautomatiseerd backup-systeem geïmplementeerd.
+## 🎁 Bonus: 
+Uptime-Kuma zorgt ervoor dat je een email(kan ook andere dingen instellen) krijgt mocht een docker stoppen zodat je het probleem zo snel mogelijk zou kunnen oplossen
 
-### 🛠️ Werking van het Backup-script (`backup.sh`)
-Het script zorgt voor een veilige en gecomprimeerde opslag van de InfluxDB-tijdreeksdata:
-* **Compressie**: Maakt gebruik van `tar -czf` om het data-volume efficiënt te verpakken.
-* **Versiebeheer**: Elk bestand krijgt een unieke tijdstempel (`YYYYMMDD_HHMMSS`) in de naam.
-* **Opslag**: Backups worden lokaal bewaard in de map `./backups`.
-* **Retentiebeleid**: Om schijfruimte op de gateway te besparen, worden backups ouder dan 7 dagen automatisch verwijderd via een `find` routine wanneer je een backup maakt.
-
-### 🚀 Gebruik
-Zorg eerst dat het script de juiste rechten heeft en voer het daarna uit:
-```bash
-chmod +x backup.sh
-./backup.sh
-```
-
-## Vervang de corrupte data door de backup
-- Stop de actieve stack:
-
-```Bash
-docker compose down
-```
-- Verwijder de corrupte data:
-
-```Bash
-sudo rm -rf ./influxdb
-```
-- Pak de gewenste backup uit:
-
-```Bash
-# Vervang 'DATUM' door de tijdstempel van de gewenste backup
-sudo tar -xzf ./backups/influxdb_backup_DATUM.tar.gz -C ./
-```
-
-- Herstart de services:
-
-```Bash
-docker compose up -d
-```
