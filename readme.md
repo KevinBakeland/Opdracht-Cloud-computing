@@ -6,7 +6,7 @@ Het gebruikt een Python-script dat in een Docker-container draait om fictieve cr
 Node-RED haalt vervolgens de data op via MQTT en slaat deze op in een InfluxDB-database.
 Node-RED wordt ook gebruikt om de data uit InfluxDB op te halen en deze weer te geven op het dashboard.
 
-<img src="img/stock.png" width="700">
+<img src="img/stock.jpg" width="700">
 
 
 ## Wat doet het project?
@@ -35,6 +35,7 @@ Node-RED is mijn centrale verwerkingslaag in dit project en bevat drie hoofdblok
 - een market simulator die prijzen genereert,
 - een verwerkingsstroom die de data valideert en omzet naar InfluxDB,
 - en een portfolio-sync via HTTP endpoints.
+ <img src="img/Flow.png" width="700">
 
 ## Installatie en deployment
 Voer dit uit in de map:
