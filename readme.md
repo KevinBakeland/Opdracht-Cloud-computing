@@ -41,7 +41,7 @@ Node-RED is mijn centrale verwerkingslaag in dit project en bevat drie hoofdblok
 Voer dit uit in de map:
 
 ```bash
-cd /root/smart-gateway
+cd Opdracht-Cloud-computing
 chmod +x deploy.sh
 ./deploy.sh
 ```
