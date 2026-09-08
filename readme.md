@@ -1,5 +1,10 @@
 # Smart Gateway Dashboard
 
+#Wat er nog moet veranderd worden
+
+- Zorg ervoor dat heel het project gestard kan worden met alleen docker compose up.
+- Zorg ervoor dat je geen account moet aanmaken voor die verschilende websites zoals portainer en uptime-kuma
+
 ## Overzicht
 Dit project is een slimme gateway voor een live trading dashboard.
 Het gebruikt een Python-script dat in een Docker-container draait om fictieve crypto-data te genereren en deze via Mosquitto op een MQTT-server te publiceren.
