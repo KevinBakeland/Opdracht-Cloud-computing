@@ -4,6 +4,7 @@
 
 - Zorg ervoor dat heel het project gestard kan worden met alleen docker compose up.
 - Zorg ervoor dat je geen account moet aanmaken voor die verschilende websites zoals portainer en uptime-kuma
+- Verander het docker netwerk van IoT naar Switch
 
 ## Overzicht
 Dit project is een slimme gateway voor een live trading dashboard.
