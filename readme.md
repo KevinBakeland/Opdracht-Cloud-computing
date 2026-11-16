@@ -12,6 +12,15 @@ Het gebruikt een Python-script dat in een Docker-container draait om fictieve cr
 Node-RED haalt vervolgens de data op via MQTT en slaat deze op in een InfluxDB-database.
 Node-RED wordt ook gebruikt om de data uit InfluxDB op te halen en deze weer te geven op het dashboard.
 
+## Van notities
+- Github cid script
+- Deze readme file correct maken want het is niet compleet/juist
+- Reflectie Document moet erbij
+- Uptime kuma eb portainer moeten direct starten zonder inlog scherm
+- containernaam betekenis, pallete of zoiets
+- Vollume, wat is dat en welke 2 dingen zijn dat
+- waar wordt de docjer compose data opgeslagen
+
 <img src="img/stock.jpg" width="700">
 
 
